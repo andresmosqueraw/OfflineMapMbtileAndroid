@@ -38,6 +38,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         const val MBTILES_NAME = "planet2.mbtiles"
+        const val POINTS_MBTILES_NAME = "predio_terreno.mbtiles" // Cambia esto por el nombre de tu archivo de puntos
     }
 
     private val mapView: MapView by lazy { findViewById(R.id.mapView) }
@@ -120,7 +121,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             //Getting reference to mbtiles file in assets
-            showMbTilesMap(getFileFromAssets(this, MBTILES_NAME))
+            showMbTilesMap(getFileFromAssets(this, MBTILES_NAME), getFileFromAssets(this, POINTS_MBTILES_NAME))
 //            showMbTilesMap(getFileFromAssets(this, "maps_salzburg_4.mbtiles"))
 
 //            showMbTilesMap(File("/storage/emulated/0/Android/data/com.abhiank.offline/files/belarus.mbtiles"))
@@ -146,11 +147,11 @@ class MainActivity : AppCompatActivity() {
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK && result.data != null) {
                 val returnIntent = result.data!!
-                showMbTilesMap(File(returnIntent.data!!.path!!))
+                showMbTilesMap(File(returnIntent.data!!.path!!), null)
             }
         }
 
-    private fun showMbTilesMap(mbtilesFile: File) {
+    private fun showMbTilesMap(mbtilesFile: File, pointsFile: File? = null) {
         val styleJsonInputStream = assets.open("bright.json")
 
         //Creating a new file to which to copy the json content to
@@ -163,8 +164,13 @@ class MainActivity : AppCompatActivity() {
         minZoomLevel = getMinZoom(mbtilesFile).toDouble()
 
         //Replacing placeholder with uri of the mbtiles file
-        val newFileStr = styleFile.inputStream().readToString()
+        var newFileStr = styleFile.inputStream().readToString()
             .replace("___FILE_URI___", "mbtiles:///${mbtilesFile.absolutePath}")
+        
+        // If points file is provided, replace the points placeholder too
+        pointsFile?.let {
+            newFileStr = newFileStr.replace("___POINTS_FILE_URI___", "mbtiles:///${it.absolutePath}")
+        }
 
         //Writing new content to file
         val gpxWriter = FileWriter(styleFile)
@@ -175,7 +181,12 @@ class MainActivity : AppCompatActivity() {
         //Setting the map style using the new edited JSON file
         map.setStyle(
             Style.Builder().fromUri(Uri.fromFile(styleFile).toString())
-        ) { style -> }
+        ) { style -> 
+            // Si se proporciona un archivo de puntos, agregarlo como capa adicional
+            pointsFile?.let { 
+                addPointsLayerFromMBTiles(style, it)
+            }
+        }
 
         //Setting camera view over the mbtiles area
         map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 0),
@@ -413,6 +424,30 @@ fun addPointToMap(style: Style, lat: Double, lng: Double) {
             .withProperties(
                 PropertyFactory.iconImage("marker-icon"),
                 PropertyFactory.iconSize(1.0f)
+            )
+    )
+}
+
+// Función para agregar una capa de puntos desde un mbtiles
+fun addPointsLayerFromMBTiles(style: Style, pointsFile: File) {
+    // Agregar la fuente de datos del archivo mbtiles de puntos
+    style.addSource(
+        com.mapbox.mapboxsdk.style.sources.VectorSource(
+            "points-source",
+            "mbtiles:///${pointsFile.absolutePath}"
+        )
+    )
+    
+    // Agregar la capa visual para mostrar los puntos
+    style.addLayer(
+        com.mapbox.mapboxsdk.style.layers.CircleLayer("points-circle-layer", "points-source")
+            .withSourceLayer("points") // Puede que necesites cambiar esto por el nombre de la capa en tu mbtiles
+            .withProperties(
+                PropertyFactory.circleRadius(6.0f),
+                PropertyFactory.circleColor(Color.RED),
+                PropertyFactory.circleOpacity(0.8f),
+                PropertyFactory.circleStrokeWidth(2.0f),
+                PropertyFactory.circleStrokeColor(Color.WHITE)
             )
     )
 }

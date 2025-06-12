@@ -49,6 +49,10 @@
     "openmaptiles": {
       "type": "vector",
       "url": "___FILE_URI___"
+    },
+    "predio-terreno": {
+      "type": "vector",
+      "url": "___POINTS_FILE_URI___"
     }
   },
   "sprite": "asset://sprites/sprite",
@@ -3737,6 +3741,28 @@
         "text-color": "#334",
         "text-halo-width": 2,
         "text-halo-color": "rgba(255,255,255,0.8)"
+      }
+    },
+    {
+      "id": "terrenos-fill",
+      "type": "fill",
+      "source": "predio-terreno",
+      "source-layer": "cr_terreno",
+      "paint": {
+        "fill-color": "#EC6F2D",
+        "fill-opacity": 0.3
+      }
+    },
+    {
+      "id": "predios-circle",
+      "type": "circle",
+      "source": "predio-terreno",
+      "source-layer": "ilc_predio",
+      "paint": {
+        "circle-radius": 4,
+        "circle-color": "#ff0000",
+        "circle-stroke-width": 1,
+        "circle-stroke-color": "#ffffff"
       }
     }
   ]
