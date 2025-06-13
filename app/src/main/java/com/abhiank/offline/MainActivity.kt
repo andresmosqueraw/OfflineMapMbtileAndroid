@@ -38,7 +38,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         const val MBTILES_NAME = "planet2.mbtiles"
-        const val POINTS_MBTILES_NAME = "predio_terreno.mbtiles" // Cambia esto por el nombre de tu archivo de puntos
+        const val POINTS_MBTILES_NAME = "predio_terreno_new.mbtiles" // Cambia esto por el nombre de tu archivo de puntos
     }
 
     private val mapView: MapView by lazy { findViewById(R.id.mapView) }
